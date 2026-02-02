@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralNotes - Next-Gen Note Taking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500&family=Literata:ital,wght@0,400;0,700;1,400&display=wrap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/typo-js/1.2.1/typo.min.js"></script>
+    <link rel="stylesheet" href=main.csss">
+</head>
+<body data-theme="light">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">NeuralNotes</div>
+                <div class="tagline">Next-Gen Note Taking</div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="sidebar-tab active" id="notesTab" onclick="switchSidebarTab('notes')">
+                    📝 Notes
+                </button>
+                <button class="sidebar-tab" id="remindersTab" onclick="switchSidebarTab('reminders')">
+                    ⏰ Reminders
+                </button>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search notes..." />
+                </div>
+            </div>
+
+            <!-- Notes List -->
+            <div class="notes-list" id="notesList">
+                <!-- Notes will be inserted here -->
+            </div>
+
+            <!-- Reminders List -->
+            <div class="notes-list" id="remindersList" style="display: none;">
+                <!-- Reminders will be inserted here -->
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary" id="newNoteBtn">+ New Note</button>
+                <button class="btn btn-secondary" id="settingsBtn" title="Settings">⚙️</button>
+                <button class="btn btn-secondary" id="helpBtn" title="Help Guide" onclick="showWelcome()">❓</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="toggle-sidebar" id="toggleSidebar">☰</button>
+                    <div style="font-family: 'Syne', sans-serif; font-weight: 700;">
+                        <span id="noteStatus">Ready</span>
+                    </div>
+                </div>
+                <div class="toolbar-actions">
+                    <button class="icon-btn" id="voiceBtn" title="Voice Input">🎤 Voice</button>
+                    <button class="icon-btn" id="spellCheckBtn" title="Spell Check">✓ Spell</button>
+                    <button class="icon-btn" id="reminderBtn" title="Add Reminder">⏰ Remind</button>
+                    <button class="icon-btn" id="markdownToggle" title="Markdown Mode">📝 Markdown</button>
+                    <button class="icon-btn" id="lockBtn" title="Lock Note">🔒 Lock</button>
+                    <button class="icon-btn" id="exportBtn" title="Export">💾 Export</button>
+                    <button class="icon-btn" id="themeToggle" title="Toggle Theme">🌓 Theme</button>
+                    <button class="icon-btn" id="deleteBtn" title="Delete Note" style="color: var(--danger);">🗑️</button>
+                </div>
+            </div>
+
+            <div class="editor-container" id="editorContainer">
+                <!-- Content will be inserted here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Word Count Widget -->
+    <div class="word-count" id="wordCount" style="display: none;">
+        <div><strong>Words:</strong> <span id="wordCountValue">0</span></div>
+        <div><strong>Chars:</strong> <span id="charCountValue">0</span></div>
+    </div>
+
+    <!-- Voice Recording Indicator -->
+    <div class="voice-recording" id="voiceRecording">
+        <div class="voice-waveform">
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+            <div class="voice-bar"></div>
+        </div>
+        <span>Recording... Click to stop</span>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div class="modal" id="reminderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Reminder</h2>
+                <button class="close-modal" onclick="closeModal('reminderModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="reminderTitle" placeholder="What do you want to be reminded about?" />
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="reminderCategory">
+                    <option value="work">🏢 Work</option>
+                    <option value="personal">👤 Personal</option>
+                    <option value="health">💪 Health & Fitness</option>
+                    <option value="shopping">🛒 Shopping</option>
+                    <option value="birthday">🎂 Birthday</option>
+                    <option value="recipe">🍳 Recipe / Cooking</option>
+                    <option value="event">📅 Event</option>
+                    <option value="medication">💊 Medication</option>
+                    <option value="exercise">🏃 Exercise</option>
+                    <option value="other">📌 Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" id="reminderDate" />
+            </div>
+            <div class="form-group">
+                <label>Time</label>
+                <input type="time" id="reminderTime" />
+            </div>
+            <div class="form-group">
+                <label>Notes (Optional)</label>
+                <textarea id="reminderNotes" style="width: 100%; min-height: 80px; padding: 0.75rem; border: 2px solid var(--border); border-radius: 8px; background: var(--bg-tertiary); color: var(--text-primary); font-family: 'Literata', serif; resize: vertical;" placeholder="Add additional details..."></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveReminder()">Add Reminder</button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-modal" onclick="closeModal('settingsModal')">×</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalNotes">0</div>
+                    <div class="stat-label">Total Notes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalWords">0</div>
+                    <div class="stat-label">Total Words</div>
+                </div>
+            </div>
+            
+            <!-- Permission Status -->
+            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 2px solid var(--border);">
+                <div style="font-family: 'Syne', sans-serif; font-weight: 700; margin-bottom: 0.75rem; font-size: 0.9rem;">Permissions</div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;">
+                        <span>🎤 Microphone:</span>
+                        <span id="micPermission" style="font-weight: 700;">Unknown</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;">
+                        <span>🔔 Notifications:</span>
+                        <span id="notifPermission" style="font-weight: 700;">Unknown</span>
+                    </div>
+                </div>
+                <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-tertiary); font-family: 'IBM Plex Mono', monospace;">
+                    Click Voice or add a Reminder to enable permissions
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Default Note Color</label>
+                <div class="color-options" id="colorOptions">
+                    <!-- Color options will be inserted here -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Auto-Save Interval</label>
+                <select id="autoSaveInterval">
+                    <option value="1000">1 second</option>
+                    <option value="3000" selected>3 seconds</option>
+                    <option value="5000">5 seconds</option>
+                    <option value="10000">10 seconds</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="spellCheckSetting" style="width: auto;" />
+                    <span>Enable Spell Check</span>
+                </label>
+            </div>
+            <div class="form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="checkbox" id="autoCorrectSetting" style="width: auto;" />
+                    <span>Enable Auto-Correct</span>
+                </label>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <!-- Lock Modal -->
+    <div class="modal" id="lockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="lockModalTitle">Lock Note</h2>
+                <button class="close-modal" onclick="closeModal('lockModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="lockPassword" placeholder="Enter password" />
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" id="lockConfirmBtn">Lock Note</button>
+        </div>
+    </div>
+
+    <!-- Welcome Guide Modal -->
+    <div class="modal" id="welcomeModal">
+        <div class="modal-content welcome-guide">
+            <div class="modal-header">
+                <h2>Welcome to NeuralNotes! 🧠</h2>
+                <button class="close-modal" onclick="closeWelcome()">×</button>
+            </div>
+            <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+                Next-generation note-taking with powerful features. Here's what you can do:
+            </p>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🎤</div>
+                    <div class="feature-content">
+                        <h3>Voice Writing</h3>
+                        <p>Click the Voice button to dictate notes hands-free. We'll ask for microphone permission first.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⏰</div>
+                    <div class="feature-content">
+                        <h3>Smart Reminders</h3>
+                        <p>Switch to Reminders tab to set alerts for tasks, birthdays, medications, and more. You'll get browser notifications!</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">✓</div>
+                    <div class="feature-content">
+                        <h3>Spell Checker</h3>
+                        <p>Enable spell checking to catch common typos. Turn on auto-correct in settings for instant fixes.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📝</div>
+                    <div class="feature-content">
+                        <h3>Markdown Support</h3>
+                        <p>Write in Markdown for rich formatting. Switch between Edit and Preview modes.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-content">
+                        <h3>Note Encryption</h3>
+                        <p>Lock sensitive notes with a password. They'll be encrypted and hidden until unlocked.</p>
+                    </div>
+                </div>
+            </div>
+            <div style="background: var(--bg-tertiary); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--accent-primary);">
+                <strong>Privacy First:</strong> All your data stays on your device. No servers, no tracking, works offline.
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="closeWelcome()">Get Started!</button>
+        </div>
+    </div>
+
+ <script src="app.js"></script>
+</body>
+</html>
