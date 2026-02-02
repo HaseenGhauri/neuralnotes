@@ -555,7 +555,7 @@ NeuralNotes respects your privacy and only requests permissions when you actuall
 
 ## 🎉 Get Started Now!
 
-1. Download `neuralnotes.html`
+1. Download `index.html`
 2. Double-click to open in browser
 3. Create your first note
 4. Experience the difference
